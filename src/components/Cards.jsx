@@ -8,6 +8,7 @@ description:
 image:
 "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200&auto=format&fit=crop",
 tag: "Nature",
+price: "50$"
 },
 {
 id: 2,
@@ -17,6 +18,7 @@ description:
 image:
 "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=1200&auto=format&fit=crop",
 tag: "Urban",
+price: "90$"
 },
 {
 id: 3,
@@ -26,6 +28,7 @@ description:
 image:
 "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1200&auto=format&fit=crop",
 tag: "Outdoors",
+price: "20$"
 },
 {
 id: 4,
@@ -35,6 +38,7 @@ description:
 image:
 "https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=1200&auto=format&fit=crop",
 tag: "Workspace",
+price: "200$"
 },
 {
 id: 5,
@@ -44,6 +48,7 @@ description:
 image:
 "https://images.unsplash.com/photo-1551516594-56cb78394645?q=80&w=1200&auto=format&fit=crop",
 tag: "Travel",
+price: "100$"
 },
 {
 id: 6,
@@ -53,6 +58,7 @@ description:
 image:
 "https://images.unsplash.com/photo-1496307042754-b4aa456c4a2d?q=80&w=1200&auto=format&fit=crop",
 tag: "Lifestyle",
+price: "70$"
 },
 ];
 

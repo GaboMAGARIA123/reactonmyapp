@@ -6,6 +6,7 @@ function App() {
   const [searchText, setSearchText] = useState("");
   const [searchDescription, setSearchDescription] = useState("");
   const [filteredCards, setFilteredCards] = useState(sampleCards);
+  const [favorites, setFavorites] = useState([]);
 
   useEffect(() => {
     const searchtext = searchText.toLowerCase();
@@ -22,6 +23,20 @@ function App() {
     );
     setFilteredCards(result);
   }, [searchDescription]);
+
+  const toggleFavorite = (card) => {
+  const exists = favorites.find(f => f.id === card.id);
+
+if (exists) {
+  setFavorites(favorites.filter(f => f.id !== card.id));  
+} else {
+  setFavorites([...favorites, card]);                     
+}
+
+  };
+
+  const totalPrice = favorites.reduce((sum, fav) => sum + Number(fav.price.replace("$", "")), 0);
+
 
   const handleTextChange = (e) => setSearchText(e.target.value);
   const handleDescriptionChange = (e) => setSearchDescription(e.target.value);
@@ -59,14 +74,18 @@ function App() {
             </div>
             <div className="card-content">
               <h3>{card.title}</h3>
+              <h4>{card.price}</h4>
               <p>{card.description}</p>
             </div>
             <div className="card-buttons">
-              <button>☆ Like</button>
+              <button onClick={() => toggleFavorite(card)}>
+                {favorites.some(f => f.id === card.id) ? "★ Favorited" : "☆ Like"}
+              </button>
               <button className="open">Open</button>
             </div>
           </div>
         ))}
+        <h1>Liked cards total price is {totalPrice}$</h1>
       </div>
     </>
   );
