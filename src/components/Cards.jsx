@@ -6,7 +6,7 @@ title: "Ocean Retreat",
 description:
 "Calming blue tones and gentle waves. Perfect for focus or relaxation.",
 image:
-"https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200&auto=format&fit=crop",
+"https://images.unsplash.com/photo-1507525428034-b7a23cf961d3e?q=80&w=1200&auto=format&fit=crop",
 tag: "Nature",
 price: "50$"
 },

@@ -31,8 +31,7 @@ if (exists) {
   setFavorites(favorites.filter(f => f.id !== card.id));  
 } else {
   setFavorites([...favorites, card]);                     
-}
-
+}    
   };
 
   const totalPrice = favorites.reduce((sum, fav) => sum + Number(fav.price.replace("$", "")), 0);
@@ -40,6 +39,28 @@ if (exists) {
 
   const handleTextChange = (e) => setSearchText(e.target.value);
   const handleDescriptionChange = (e) => setSearchDescription(e.target.value);
+
+  const handleSortChange = (value) => {
+    const listToSort = [...filteredCards];
+
+    if (value === "low-to-high") {
+      listToSort.sort((a, b) =>
+        Number(a.price.replace("$", "")) - Number(b.price.replace("$", ""))
+      );
+    } else if (value === "high-to-low") {
+      listToSort.sort((a, b) =>
+        Number(b.price.replace("$", "")) - Number(a.price.replace("$", ""))
+      );
+    } else if (value === "title-a-z") {
+      listToSort.sort((a, b) => a.title.localeCompare(b.title));
+    } else {
+      // reset to original sampleCards order
+      setFilteredCards([...sampleCards]);
+      return;
+    }
+
+    setFilteredCards(listToSort);
+  };
 
   return (
     <>
@@ -52,16 +73,21 @@ if (exists) {
         <div className="search-inputs">
           <input
             type="text"
+            placeholder="Search Cards by Description"
+            value={searchDescription}
+            onChange={handleDescriptionChange}
+          /><input
+            type="text"
             placeholder="Search Cards by Title"
             value={searchText}
             onChange={handleTextChange}
           />
-          <input
-            type="text"
-            placeholder="Search Cards by Description"
-            value={searchDescription}
-            onChange={handleDescriptionChange}
-          />
+         <select onChange={(e) => handleSortChange(e.target.value)} defaultValue="sort">
+            <option value="sort">Sort by...</option>
+            <option value="low-to-high">Price: Low to High</option>
+            <option value="high-to-low">Price: High to Low</option>
+            <option value="title-a-z">Title A-Z</option>
+          </select>
         </div>
       </div>
 
