@@ -1,7 +1,6 @@
 import { useState } from "react";
 import sampleCards from "./components/Cards";
 import "./App.css";
-import { Wrapper } from "./components/Wrapper";
 
 function App() {
   const [filteredCards, setFilteredCards] = useState(sampleCards);
@@ -72,14 +71,7 @@ function App() {
 
   return (
     <>
-      <Wrapper>Hello world</Wrapper>
-      <Wrapper>Hello world 2</Wrapper>
-      <Wrapper>Hello world 3</Wrapper>
-
-
-
-      
-      {/* <div className="head">
+      <div className="head">
         <h1>Gift Cards</h1>
       </div>
 
@@ -178,7 +170,7 @@ function App() {
             </div>
           </div>
         </div>
-      )} */}
+      )}
     </>
   );
 }
