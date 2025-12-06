@@ -1,28 +1,13 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import sampleCards from "./components/Cards";
 import "./App.css";
 
 function App() {
-  const [searchText, setSearchText] = useState("");
-  const [searchDescription, setSearchDescription] = useState("");
   const [filteredCards, setFilteredCards] = useState(sampleCards);
   const [favorites, setFavorites] = useState([]);
 
-  useEffect(() => {
-    const searchtext = searchText.toLowerCase();
-    const result = sampleCards.filter((card) =>
-      card.title.toLowerCase().includes(searchtext)
-    );
-    setFilteredCards(result);
-  }, [searchText]);
-
-  useEffect(() => {
-    const searchdes = searchDescription.toLowerCase();
-    const result = sampleCards.filter((card) =>
-      card.description.toLowerCase().includes(searchdes)
-    );
-    setFilteredCards(result);
-  }, [searchDescription]);
+  const [selectedCard, setSelectedCard] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const toggleFavorite = (card) => {
     const exists = favorites.find((f) => f.id === card.id);
@@ -34,35 +19,54 @@ function App() {
     }
   };
 
+  const deleteCard = (cardToDelete) => {
+    const updated = filteredCards.filter((c) => c.id !== cardToDelete.id);
+    setFilteredCards(updated);
+
+    setFavorites(favorites.filter((f) => f.id !== cardToDelete.id));
+
+    if (selectedCard && selectedCard.id === cardToDelete.id) {
+      setIsModalOpen(false);
+      setSelectedCard(null);
+    }
+  };
+
   const totalPrice = favorites.reduce(
     (sum, fav) => sum + Number(fav.price.replace("$", "")),
     0
   );
 
-  const handleTextChange = (e) => setSearchText(e.target.value);
-  const handleDescriptionChange = (e) => setSearchDescription(e.target.value);
-
   const handleSortChange = (value) => {
-    const listToSort = [...filteredCards];
+    const list = [...filteredCards];
 
     if (value === "low-to-high") {
-      listToSort.sort(
+      list.sort(
         (a, b) =>
           Number(a.price.replace("$", "")) - Number(b.price.replace("$", ""))
       );
     } else if (value === "high-to-low") {
-      listToSort.sort(
+      list.sort(
         (a, b) =>
           Number(b.price.replace("$", "")) - Number(a.price.replace("$", ""))
       );
     } else if (value === "title-a-z") {
-      listToSort.sort((a, b) => a.title.localeCompare(b.title));
+      list.sort((a, b) => a.title.localeCompare(b.title));
     } else {
       setFilteredCards([...sampleCards]);
       return;
     }
 
-    setFilteredCards(listToSort);
+    setFilteredCards(list);
+  };
+
+  const openViewModal = (card) => {
+    setSelectedCard(card);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setSelectedCard(null);
+    setIsModalOpen(false);
   };
 
   return (
@@ -73,20 +77,10 @@ function App() {
 
       <div className="explore-section">
         <h3>Explore</h3>
+
         <div className="search-inputs">
-          <input
-            type="text"
-            placeholder="Search Cards by Description"
-            value={searchDescription}
-            onChange={handleDescriptionChange}
-          />
-          <input
-            type="text"
-            placeholder="Search Cards by Title"
-            value={searchText}
-            onChange={handleTextChange}
-          />
           <select
+            className="selector"
             onChange={(e) => handleSortChange(e.target.value)}
             defaultValue="sort"
           >
@@ -95,6 +89,8 @@ function App() {
             <option value="high-to-low">Price: High to Low</option>
             <option value="title-a-z">Title A-Z</option>
           </select>
+
+          <button className="open">+Add new card</button>
         </div>
       </div>
 
@@ -105,23 +101,76 @@ function App() {
               <img src={card.image} alt={card.title} />
               <div className="card-tag">{card.tag}</div>
             </div>
+
             <div className="card-content">
               <h3>{card.title}</h3>
               <h4>{card.price}</h4>
               <p>{card.description}</p>
             </div>
+
             <div className="card-buttons">
-              <button onClick={() => toggleFavorite(card)}>
+              <button
+                className="disabled-fav"
+                onClick={(e) => {
+                  e.target.classList.add("shake");
+                  setTimeout(() => e.target.classList.remove("shake"), 500);
+                }}
+              >
                 {favorites.some((f) => f.id === card.id)
                   ? "★ Favorited"
                   : "☆ Like"}
               </button>
-              <button className="open">Open</button>
+
+              <div className="editdel">
+                <button onClick={() => openViewModal(card)}>View</button>
+
+                <button>Edit</button>
+
+                <button className="red" onClick={() => deleteCard(card)}>
+                  Delete
+                </button>
+              </div>
             </div>
           </div>
         ))}
-        <h1>Liked cards total price is {totalPrice}$</h1>
       </div>
+
+      <h1>Liked cards total price is {totalPrice}$</h1>
+
+      {isModalOpen && selectedCard && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <img
+              className="modal-image"
+              src={selectedCard.image}
+              alt={selectedCard.title}
+            />
+
+            <div className="modal-content">
+              <h2>{selectedCard.title}</h2>
+              <p>{selectedCard.description}</p>
+              <p>
+                <strong>Price:</strong> {selectedCard.price}
+              </p>
+
+              <br />
+              <hr />
+
+              <div className="card-buttons">
+                <button onClick={() => toggleFavorite(selectedCard)}>
+                  {favorites.some((f) => f.id === selectedCard.id)
+                    ? "★ Favorited"
+                    : "☆ Like"}
+                </button>
+
+                <button className="close-btn" onClick={closeModal}>
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
