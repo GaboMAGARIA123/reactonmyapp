@@ -1,72 +1,133 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import sampleCards from "./components/Cards";
 import "./App.css";
+import { Modals } from "./components/Modals";
 
 function App() {
+  const [cards, setCards] = useState(sampleCards);
   const [filteredCards, setFilteredCards] = useState(sampleCards);
   const [favorites, setFavorites] = useState([]);
 
   const [selectedCard, setSelectedCard] = useState(null);
+
+  // modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalType, setModalType] = useState(""); // "view" | "add" | "delete"
+
+  // add form
+  const [newCard, setNewCard] = useState({
+    title: "",
+    description: "",
+    image: "",
+    tag: "Nature",
+    price: 0,
+  });
+
+  // keep filteredCards in sync when cards changes (after delete/add)
+  useEffect(() => {
+    setFilteredCards(cards);
+  }, [cards]);
+
+  const totalPrice = useMemo(() => {
+    return favorites.reduce((sum, fav) => {
+      const n = Number(String(fav.price).replace("$", ""));
+      return sum + (Number.isFinite(n) ? n : 0);
+    }, 0);
+  }, [favorites]);
+
+  const openModal = (type, card = null) => {
+    setModalType(type);
+    setSelectedCard(card);
+    setIsModalOpen(true);
+
+    if (type === "add") {
+      setNewCard({
+        title: "",
+        description: "",
+        image: "",
+        tag: "Nature",
+        price: 0,
+      });
+    }
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setModalType("");
+    setSelectedCard(null);
+  };
 
   const toggleFavorite = (card) => {
-    const exists = favorites.find((f) => f.id === card.id);
-
-    if (exists) {
-      setFavorites(favorites.filter((f) => f.id !== card.id));
-    } else {
-      setFavorites([...favorites, card]);
-    }
+    const exists = favorites.some((f) => f.id === card.id);
+    setFavorites(exists ? favorites.filter((f) => f.id !== card.id) : [...favorites, card]);
   };
 
   const deleteCard = (cardToDelete) => {
-    const updated = filteredCards.filter((c) => c.id !== cardToDelete.id);
-    setFilteredCards(updated);
-
-    setFavorites(favorites.filter((f) => f.id !== cardToDelete.id));
-
-    if (selectedCard && selectedCard.id === cardToDelete.id) {
-      setIsModalOpen(false);
-      setSelectedCard(null);
-    }
+    setCards((prev) => prev.filter((c) => c.id !== cardToDelete.id));
+    setFavorites((prev) => prev.filter((f) => f.id !== cardToDelete.id));
+    closeModal();
   };
 
-  const totalPrice = favorites.reduce(
-    (sum, fav) => sum + Number(fav.price.replace("$", "")),
-    0
-  );
-
   const handleSortChange = (value) => {
-    const list = [...filteredCards];
+    const list = [...cards];
 
     if (value === "low-to-high") {
       list.sort(
         (a, b) =>
-          Number(a.price.replace("$", "")) - Number(b.price.replace("$", ""))
+          Number(String(a.price).replace("$", "")) -
+          Number(String(b.price).replace("$", ""))
       );
-    } else if (value === "high-to-low") {
-      list.sort(
-        (a, b) =>
-          Number(b.price.replace("$", "")) - Number(a.price.replace("$", ""))
-      );
-    } else if (value === "title-a-z") {
-      list.sort((a, b) => a.title.localeCompare(b.title));
-    } else {
-      setFilteredCards([...sampleCards]);
+      setFilteredCards(list);
       return;
     }
 
-    setFilteredCards(list);
+    if (value === "high-to-low") {
+      list.sort(
+        (a, b) =>
+          Number(String(b.price).replace("$", "")) -
+          Number(String(a.price).replace("$", ""))
+      );
+      setFilteredCards(list);
+      return;
+    }
+
+    if (value === "title-a-z") {
+      list.sort((a, b) => String(a.title).localeCompare(String(b.title)));
+      setFilteredCards(list);
+      return;
+    }
+
+    setFilteredCards(cards);
   };
 
-  const openViewModal = (card) => {
-    setSelectedCard(card);
-    setIsModalOpen(true);
+  const handleAddChange = (key, value) => {
+    setNewCard((prev) => ({ ...prev, [key]: value }));
   };
 
-  const closeModal = () => {
-    setSelectedCard(null);
-    setIsModalOpen(false);
+  const submitAddCard = () => {
+    const title = newCard.title.trim();
+    const description = newCard.description.trim();
+    const image = newCard.image.trim();
+    const tag = newCard.tag.trim();
+    const priceNum = Number(newCard.price);
+
+    if (!title || !description || !image || !tag || !Number.isFinite(priceNum)) {
+      // keep it simple (no extra libs)
+      alert("Please fill all fields correctly.");
+      return;
+    }
+
+    const created = {
+      id: crypto?.randomUUID ? crypto.randomUUID() : Date.now(),
+      title,
+      description,
+      image,
+      tag,
+      price: `$${priceNum}`,
+    };
+
+    setCards((prev) => [created, ...prev]);
+    closeModal();
   };
 
   return (
@@ -90,7 +151,9 @@ function App() {
             <option value="title-a-z">Title A-Z</option>
           </select>
 
-          <button className="open">+Add new card</button>
+          <button className="open" onClick={() => openModal("add")}>
+            + Add new card
+          </button>
         </div>
       </div>
 
@@ -110,23 +173,15 @@ function App() {
 
             <div className="card-buttons">
               <button
-                className="disabled-fav"
-                onClick={(e) => {
-                  e.target.classList.add("shake");
-                  setTimeout(() => e.target.classList.remove("shake"), 500);
-                }}
+                onClick={() => toggleFavorite(card)}
+                className={favorites.some((f) => f.id === card.id) ? "fav-on" : ""}
               >
-                {favorites.some((f) => f.id === card.id)
-                  ? "★ Favorited"
-                  : "☆ Like"}
+                {favorites.some((f) => f.id === card.id) ? "★ Favorited" : "☆ Like"}
               </button>
 
               <div className="editdel">
-                <button onClick={() => openViewModal(card)}>View</button>
-
-                <button>Edit</button>
-
-                <button className="red" onClick={() => deleteCard(card)}>
+                <button onClick={() => openModal("view", card)}>View</button>
+                <button className="red" onClick={() => openModal("delete", card)}>
                   Delete
                 </button>
               </div>
@@ -135,42 +190,144 @@ function App() {
         ))}
       </div>
 
-      <h1>Liked cards total price is {totalPrice}$</h1>
+      <div className="total">
+        Liked cards total price is <b>${totalPrice}</b>
+      </div>
 
-      {isModalOpen && selectedCard && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <img
-              className="modal-image"
-              src={selectedCard.image}
-              alt={selectedCard.title}
-            />
+      <Modals
+        isOpen={isModalOpen}
+        title={
+          modalType === "add"
+            ? "Add New Card"
+            : modalType === "delete"
+            ? "Delete Card"
+            : selectedCard
+            ? selectedCard.title
+            : ""
+        }
+        onClose={closeModal}
+        containerclassName={
+          modalType === "add"
+            ? "modal-wide"
+            : modalType === "view"
+            ? "modal-view"
+            : "modal-confirm"
+        }
+      >
+        {modalType === "view" && selectedCard && (
+          <div className="view-wrap">
+            <img className="view-image" src={selectedCard.image} alt={selectedCard.title} />
 
-            <div className="modal-content">
-              <h2>{selectedCard.title}</h2>
-              <p>{selectedCard.description}</p>
-              <p>
-                <strong>Price:</strong> {selectedCard.price}
-              </p>
+            <div className="view-content">
+              <p className="view-desc">{selectedCard.description}</p>
 
-              <br />
-              <hr />
+              <div className="view-row">
+                <span className="view-label">Tag:</span>
+                <span>{selectedCard.tag}</span>
+              </div>
 
-              <div className="card-buttons">
-                <button onClick={() => toggleFavorite(selectedCard)}>
-                  {favorites.some((f) => f.id === selectedCard.id)
-                    ? "★ Favorited"
-                    : "☆ Like"}
+              <div className="view-row">
+                <span className="view-label">Price:</span>
+                <span>{selectedCard.price}</span>
+              </div>
+
+              <div className="modal-footer">
+                <button className="btn" onClick={() => toggleFavorite(selectedCard)}>
+                  {favorites.some((f) => f.id === selectedCard.id) ? "★ Favorited" : "☆ Like"}
                 </button>
 
-                <button className="close-btn" onClick={closeModal}>
-                  Close
-                </button>
+                <div className="footer-right">
+                  <button className="btn" onClick={closeModal}>
+                    Close
+                  </button>
+                  <button className="btn red-btn" onClick={() => openModal("delete", selectedCard)}>
+                    Delete
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+        {modalType === "add" && (
+          <div className="form">
+            <div className="field">
+              <label>Title <span>*</span></label>
+              <input
+                placeholder="Enter card title"
+                value={newCard.title}
+                onChange={(e) => handleAddChange("title", e.target.value)}
+              />
+            </div>
+
+            <div className="field">
+              <label>Description <span>*</span></label>
+              <textarea
+                placeholder="Enter card description"
+                value={newCard.description}
+                onChange={(e) => handleAddChange("description", e.target.value)}
+              />
+            </div>
+
+            <div className="field">
+              <label>Image URL <span>*</span></label>
+              <input
+                placeholder="https://example.com/image.jpg"
+                value={newCard.image}
+                onChange={(e) => handleAddChange("image", e.target.value)}
+              />
+            </div>
+
+            <div className="grid2">
+              <div className="field">
+                <label>Tag <span>*</span></label>
+                <select value={newCard.tag} onChange={(e) => handleAddChange("tag", e.target.value)}>
+                  <option>Nature</option>
+                  <option>Food</option>
+                  <option>Travel</option>
+                  <option>Shopping</option>
+                  <option>Games</option>
+                </select>
+              </div>
+
+              <div className="field">
+                <label>Price ($) <span>*</span></label>
+                <input
+                  type="number"
+                  min="0"
+                  value={newCard.price}
+                  onChange={(e) => handleAddChange("price", e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button className="btn" onClick={closeModal}>
+                Cancel
+              </button>
+              <button className="btn blue-btn" onClick={submitAddCard}>
+                Add Card
+              </button>
+            </div>
+          </div>
+        )}
+        {modalType === "delete" && selectedCard && (
+          <div className="confirm">
+            <p className="confirm-text">
+              Are you sure you want to delete{" "}
+              <b>&quot;{selectedCard.title}&quot;</b>? This action cannot be undone.
+            </p>
+
+            <div className="modal-footer">
+              <button className="btn" onClick={closeModal}>
+                Cancel
+              </button>
+              <button className="btn red-btn" onClick={() => deleteCard(selectedCard)}>
+                Delete
+              </button>
+            </div>
+          </div>
+        )}
+      </Modals>
     </>
   );
 }
